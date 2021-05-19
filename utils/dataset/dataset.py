@@ -9,10 +9,10 @@ from utils.dataset.folder2lmdb import ImageFolderLMDB
 
 def get_cifar100(train_transform, val_transform, test_transform, CONFIG):
     train_data = datasets.CIFAR100(root=CONFIG.dataset_dir, train=True,
-                                   download=True, transform=train_transform)
+                                   download=False, transform=train_transform)
 
     test_data = datasets.CIFAR100(root=CONFIG.dataset_dir, train=False,
-                                  download=True, transform=test_transform)
+                                  download=False, transform=test_transform)
 
     val_data = None
     return train_data, val_data, test_data
@@ -20,10 +20,10 @@ def get_cifar100(train_transform, val_transform, test_transform, CONFIG):
 
 def get_cifar10(train_transform, val_transform, test_transform, CONFIG):
     train_data = datasets.CIFAR10(root=CONFIG.dataset_dir, train=True,
-                                  download=True, transform=train_transform)
+                                  download=False, transform=train_transform)
 
     test_data = datasets.CIFAR10(root=CONFIG.dataset_dir, train=False,
-                                 download=True, transform=test_transform)
+                                 download=False, transform=test_transform)
 
     val_data = None
     return train_data, val_data, test_data

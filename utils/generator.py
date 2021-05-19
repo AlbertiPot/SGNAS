@@ -26,7 +26,7 @@ class ConvRelu(nn.Sequential):
 class SinGenerator(nn.Module):
     def __init__(
             self,
-            hc_dim,
+            hc_dim,                                                     # harware constraints 维度
             input_dim,
             layer_nums=5,
             hidden_dim=32,

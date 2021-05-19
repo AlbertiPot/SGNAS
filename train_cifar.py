@@ -50,18 +50,14 @@ if __name__ == "__main__":
     get_logger(CONFIG.log_dir)
     writer = get_writer(args.title, CONFIG.write_dir)
 
-    logging.info(
-        "=================================== Experiment title : {} Start ===========================".format(
-            args.title))
+    logging.info("=================================== Experiment title : {} Start ===========================".format(args.title))
 
     train_transform, val_transform, test_transform = get_transforms(CONFIG)
-    train_dataset, val_dataset, test_dataset = get_dataset(
-        train_transform, val_transform, test_transform, CONFIG)
-    train_loader, val_loader, test_loader = get_dataloader(
-        train_dataset, test_dataset, test_dataset, CONFIG)
+    train_dataset, val_dataset, test_dataset = get_dataset(train_transform, val_transform, test_transform, CONFIG)
+    train_loader, val_loader, test_loader = get_dataloader(train_dataset, test_dataset, test_dataset, CONFIG)
 
     lookup_table = LookUpTable(CONFIG)
-
+    import pdb;pdb.set_trace()
     supernet = Supernet(CONFIG)
     arch_param_nums = supernet.get_arch_param_nums()
 
@@ -70,8 +66,7 @@ if __name__ == "__main__":
     criterion = cross_encropy_with_label_smoothing
 
     if CONFIG.generator_pretrained is not None:
-        generator.load_state_dict(torch.load(
-            CONFIG.generator_pretrained)["model"])
+        generator.load_state_dict(torch.load(CONFIG.generator_pretrained)["model"])
 
     generator.to(device)
     prior_pool = PriorPool(
@@ -91,8 +86,7 @@ if __name__ == "__main__":
     noise *= 0
 
     hardware_constraint = torch.tensor(args.flops).to(device)
-    normalize_hardware_constraint = min_max_normalize(
-        CONFIG.high_flops, CONFIG.low_flops, hardware_constraint)
+    normalize_hardware_constraint = min_max_normalize(CONFIG.high_flops, CONFIG.low_flops, hardware_constraint)
 
     arch_param = generator(prior, normalize_hardware_constraint, noise)
     arch_param = lookup_table.get_validation_arch_param(arch_param)
@@ -132,5 +126,4 @@ if __name__ == "__main__":
             time.time() -
             start_time))
     logging.info(
-        "=================================== Experiment title : {} End ===========================".format(
-            args.title))
+        "=================================== Experiment title : {} End ===========================".format(args.title))

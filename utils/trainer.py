@@ -66,18 +66,12 @@ class Trainer:
 
         # Training supernet
         best_top1 = 0.0
-        for epoch in range(self.warmup_epochs):
-            logging.info(
-                "Learning Rate: {:.4f}".format(
-                    self.optimizer.param_groups[0]["lr"]))
-            self.writer.add_scalar(
-                "learning_rate/weights",
-                self.optimizer.param_groups[0]["lr"],
-                epoch)
+        for epoch in range(self.warmup_epochs):                                             # warmup_epochs表示训练supernet的论述，若为0跳过当前的loop直接进入到下面的generator训练环节
+            logging.info("Learning Rate: {:.4f}".format(self.optimizer.param_groups[0]["lr"]))
+            self.writer.add_scalar("learning_rate/weights", self.optimizer.param_groups[0]["lr"], epoch)
             logging.info("Start to train for warmup epoch {}".format(epoch))
 
-            self._training_step(model, train_loader, epoch,
-                                info_for_logger="_train_step_")
+            self._training_step(model, train_loader, epoch, info_for_logger="_train_step_") # 训一个step
             if self.CONFIG.lr_scheduler == "step":
                 self.scheduler.step()
 
@@ -91,7 +85,7 @@ class Trainer:
         best_loss = 10000.0
         best_top1 = 0
         tau = 5
-        for epoch in range(self.warmup_epochs, self.search_epochs):
+        for epoch in range(self.warmup_epochs, self.search_epochs):                         # epoch计数从warmup开始到search_epochs结束
             logging.info("Start to train for search epoch {}".format(epoch))
             logging.info("Tau: {}".format(tau))
             self._generator_training_step(
@@ -110,9 +104,7 @@ class Trainer:
 
             logging.info("Total loss : {}".format(total_loss))
             if best_loss > total_loss:
-                logging.info(
-                    "Best loss by now: {} Tau : {}.Save model".format(
-                        total_loss, kendall_tau))
+                logging.info("Best loss by now: {} Tau : {}.Save model".format(total_loss, kendall_tau))
                 best_loss = total_loss
                 save_generator_evaluate_metric(
                     evaluate_metric, self.CONFIG.path_to_generator_eval)
@@ -121,8 +113,7 @@ class Trainer:
                     self.g_optimizer,
                     self.CONFIG.path_to_save_generator)
             if top1_avg > best_top1 and total_loss < 0.4:
-                logging.info(
-                    "Best top1-avg by now: {}.Save model".format(top1_avg))
+                logging.info("Best top1-avg by now: {}.Save model".format(top1_avg))
                 best_top1 = top1_avg
                 save(
                     generator,
@@ -133,16 +124,11 @@ class Trainer:
         logging.info("Best loss: {}".format(best_loss))
         save(generator, self.g_optimizer, self.CONFIG.path_to_fianl_generator)
 
-    def train_loop(self, train_loader, test_loader, model):
+    def train_loop(self, train_loader, test_loader, model):                                 # train_cifar调用了本函数，训练超网
         best_top1 = 0.0
         for epoch in range(self.epochs):
-            logging.info(
-                "Learning Rate: {:.4f}".format(
-                    self.optimizer.param_groups[0]["lr"]))
-            self.writer.add_scalar(
-                "learning_rate/weights",
-                self.optimizer.param_groups[0]["lr"],
-                epoch)
+            logging.info("Learning Rate: {:.4f}".format(self.optimizer.param_groups[0]["lr"]))
+            self.writer.add_scalar("learning_rate/weights", self.optimizer.param_groups[0]["lr"], epoch)
             logging.info("Start to train for epoch {}".format(epoch))
 
             self._training_step(
@@ -168,18 +154,15 @@ class Trainer:
         Get target hardware constraint. If the hardware constraint was given, then wrap as the torch tesor.
         """
         if hardware_constraint is None:
-            target_hardware_constraint = self.hardware_pool[self.hardware_index] + random.random(
-            ) - 0.5
-            target_hardware_constraint = torch.tensor(
-                target_hardware_constraint, dtype=torch.float32).view(-1, 1)
+            target_hardware_constraint = self.hardware_pool[self.hardware_index] + random.random() - 0.5
+            target_hardware_constraint = torch.tensor(target_hardware_constraint, dtype=torch.float32).view(-1, 1)
             self.hardware_index += 1
 
             if self.hardware_index == len(self.hardware_pool):
                 self.hardware_index = 0
                 random.shuffle(self.hardware_pool)
         else:
-            target_hardware_constraint = torch.tensor(
-                hardware_constraint, dtype=torch.float32).view(-1, 1)
+            target_hardware_constraint = torch.tensor(hardware_constraint, dtype=torch.float32).view(-1, 1)
 
         return target_hardware_constraint
 
@@ -231,28 +214,21 @@ class Trainer:
             self.g_optimizer.zero_grad()
             target_hardware_constraint = self._get_target_hardware_constraint()
 
-            arch_param = self._get_arch_param(
-                generator, target_hardware_constraint)
+            arch_param = self._get_arch_param(generator, target_hardware_constraint)
             arch_param = self.set_arch_param(model, arch_param, tau)
 
             flops = self.lookup_table.get_model_flops(arch_param)
             logging.info("Generate model flops : {}".format(flops))
 
-            hc_loss = cal_hc_loss(
-                flops.cuda(),
-                target_hardware_constraint.item(),
-                self.CONFIG.alpha,
-                self.CONFIG.loss_penalty)
+            hc_loss = cal_hc_loss(flops.cuda(), target_hardware_constraint.item(), self.CONFIG.alpha, self.CONFIG.loss_penalty)
 
-            X, y = X.to(
-                self.device, non_blocking=True), y.to(
-                self.device, non_blocking=True)
+            X, y = X.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
             N = X.shape[0]
 
             outs = model(X, True)
 
             ce_loss = self.criterion(outs, y)
-            loss = ce_loss + hc_loss
+            loss = ce_loss + hc_loss                                # 叠加flops cost和梯度loss
             logging.info("HC loss : {}".format(hc_loss))
             loss.backward()
 
@@ -319,9 +295,7 @@ class Trainer:
 
         with torch.no_grad():
             for step, (X, y) in enumerate(loader):
-                X, y = X.to(
-                    self.device, non_blocking=True), y.to(
-                    self.device, non_blocking=True)
+                X, y = X.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
                 N = X.shape[0]
 
                 outs = model(X, True)
@@ -359,20 +333,18 @@ class Trainer:
         model.train()
         start_time = time.time()
         self.optimizer.zero_grad()
-        if not scratch:
+        if not scratch:                                                                             # 若是从scratch训练，设置训练的顺序
             model.module.set_training_order(True)
 
         for step, (X, y) in enumerate(loader):
-            X, y = X.to(
-                self.device, non_blocking=True), y.to(
-                self.device, non_blocking=True)
+            X, y = X.to(self.device, non_blocking=True), y.to(self.device, non_blocking=True)
             N = X.shape[0]
 
             self.optimizer.zero_grad()
-            if not scratch:
+            if not scratch:                                                                         # not scratch(Not False是from the scratch训练)，reset expansion ratio的训练顺序
                 model.module.set_training_order(True)
                 for i in range(4):
-                    outs = model(X)
+                    outs = model(X)                                                                 # 4个扩张率，每次训练一次，反向传递一次loss
                     loss = self.criterion(outs, y)
                     loss.backward()
                     model.module.set_training_order()

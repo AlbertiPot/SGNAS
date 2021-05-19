@@ -50,10 +50,8 @@ if __name__ == "__main__":
     set_random_seed(CONFIG.seed)
 
     train_transform, val_transform, test_transform = get_transforms(CONFIG)
-    train_dataset, val_dataset, test_dataset = get_dataset(
-        train_transform, val_transform, test_transform, CONFIG)
-    train_loader, val_loader, test_loader = get_dataloader(
-        train_dataset, val_dataset, test_dataset, CONFIG)
+    train_dataset, val_dataset, test_dataset = get_dataset(train_transform, val_transform, test_transform, CONFIG)
+    train_loader, val_loader, test_loader = get_dataloader(train_dataset, val_dataset, test_dataset, CONFIG)
 
     model = Supernet(CONFIG)
     lookup_table = LookUpTable(CONFIG)
@@ -63,11 +61,8 @@ if __name__ == "__main__":
     arch_param_nums = model.get_arch_param_nums()
     generator = get_generator(CONFIG, arch_param_nums)
 
-    if CONFIG.model_pretrained is not None and os.path.isfile(
-            CONFIG.model_pretrained):
-        logging.info(
-            "Load pretrained weight from {}".format(
-                CONFIG.model_pretrained))
+    if CONFIG.model_pretrained is not None and os.path.isfile(CONFIG.model_pretrained):
+        logging.info("Load pretrained weight from {}".format(CONFIG.model_pretrained))
         model.load_state_dict(torch.load(CONFIG.model_pretrained)["model"])
 
     model.to(device)
@@ -98,14 +93,10 @@ if __name__ == "__main__":
         lookup_table,
         prior_pool,
         CONFIG)
-    trainer.search_train_loop(
-        train_loader,
-        val_loader,
-        val_loader,
-        model,
-        generator)
+    
+    # 调用trainer的函数开始训练超网(warmup>0时)并训练generator(从warmup epochs开始计算)
+    trainer.search_train_loop(train_loader, val_loader, val_loader, model, generator)
+    
     logging.info("Total search time: {:.2f}".format(time.time() - start_time))
 
-    logging.info(
-        "=================================== Experiment title : {} End ===========================".format(
-            args.title))
+    logging.info("=================================== Experiment title : {} End ===========================".format(args.title))

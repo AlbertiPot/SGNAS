@@ -120,7 +120,7 @@ class SEModule(nn.Module):
         return inputs * feature_excite_act
 
 
-class MixedBlock(nn.Module):
+class MixedBlock(nn.Module):                                                                        # 单个subblocks的4个算子对象
     """
     Mixed Convolution block
     """
@@ -128,20 +128,21 @@ class MixedBlock(nn.Module):
                  input_channel,
                  output_channel,
                  stride,
-                 split_block=4,
+                 split_block=4,                                                                     # 传入4个kernel算子的长度
                  kernels=[3, 5, 7, 9],
                  axis=1,
                  group=1,
                  activation="relu"):
         super(MixedBlock, self).__init__()
-        self.blocks = nn.ModuleList()
+        
+        self.blocks = nn.ModuleList()                                                               # 存放subblocks的4个算子
 
         self.skip_index = None
-        for i, k in enumerate(kernels):
+        for i, k in enumerate(kernels):                                                             # kernels是创建supernet时读取yaml文件导入的[3, 5, 7, "skip"]
             if k == "skip":
                 operation = nn.Conv2d(
-                    input_channel, output_channel, 1, stride, 0, bias=False)
-                self.skip_index = i
+                    input_channel, output_channel, 1, stride, 0, bias=False)                        # skip是1×1卷积核
+                self.skip_index = i                                                                 # skip index = 遍历层数
             else:
                 operation = ConvBNRelu(
                     input_channel,
@@ -153,10 +154,10 @@ class MixedBlock(nn.Module):
                     group=group,
                 )
             self.blocks.append(operation)
-        self.split_block = split_block
+        self.split_block = split_block                                                              # 算子的总数
 
         # Order without skip operation
-        self.split_block = split_block - 1
+        self.split_block = split_block - 1                                                          # 去掉skip的算子的总数
         self.order = np.random.permutation(self.split_block)
         self.index = 0
         random.shuffle(self.order)
@@ -166,10 +167,9 @@ class MixedBlock(nn.Module):
         self.arch_param = None
 
     def forward(self, x, arch_flag=False):
-        if not arch_flag:
-            index = self.order[self.index] if not self.skip_operation else self.skip_index
-            x = self.blocks[index](
-                x) if index != self.skip_index else self.blocks[index](x) * 0
+        if not arch_flag:                                   
+            index = self.order[self.index] if not self.skip_operation else self.skip_index          # arch_flag为false时，选择正常opts or skip opts
+            x = self.blocks[index](x) if index != self.skip_index else self.blocks[index](x) * 0
             return x, self.skip_operation
         else:
             block_probability = self.arch_param.cuda()
@@ -181,7 +181,7 @@ class MixedBlock(nn.Module):
     def set_arch_param(self, arch_param):
         self.arch_param = arch_param
 
-    def set_training_order(self, reset=False, skip=False):
+    def set_training_order(self, reset=False, skip=False):                                          # 在上层的MPDBlock中调用，设置subblocks中算子是否为skip
         """
         Choose the convolution operation. If skip is true, choose skip operation
         """
@@ -194,8 +194,8 @@ class MixedBlock(nn.Module):
         if skip:
             self.skip_operation = True
         else:
-            self.index += 1
-            if self.index == self.split_block:
+            self.index += 1                                                                         # subblock的算子选择若非skip，index＋1
+            if self.index == self.split_block:                                                      # 一次遍历一个算子，遍历完全部算子后，重新洗牌，清零index
                 self.order = np.random.permutation(self.split_block)
                 random.shuffle(self.order)
                 self.index = 0
@@ -208,7 +208,7 @@ class MPDBlock(nn.Module):
                  input_channel,
                  output_channel,
                  stride,
-                 split_block=4,
+                 split_block=4,                                                         # 传入expansion的数字
                  kernels=[3, 5, 7, 9],
                  axis=1,
                  activation="relu",
@@ -219,7 +219,7 @@ class MPDBlock(nn.Module):
         self.block_output_channel = output_channel // split_block
 
         self.split_block = len(kernels)
-        self.blocks = nn.ModuleList()
+        self.blocks = nn.ModuleList()                                                   # 存放subblocks
 
         for b in range(split_block):
             if search:
@@ -281,19 +281,19 @@ class MPDBlock(nn.Module):
             l.set_arch_param(
                 arch_param[i * self.split_block:(i + 1) * self.split_block])
 
-    def set_training_order(self, active_block, reset=False, static=False):
+    def set_training_order(self, active_block, reset=False, static=False):              # 选中的expansion传给active_block
         # ================ Choose active_block
         if static and active_block == 0:
             # At least choose one block in static layer
-            active_block = random.randint(1, len(self.blocks))
+            active_block = random.randint(1, len(self.blocks))                          # 当expansion = 0时，选若干个sub-blocks(至少一个)
 
         # ================ Architecture Specific
-        active_order = np.random.permutation(len(self.blocks))
-        active_blocks = active_order[:active_block]
+        active_order = np.random.permutation(len(self.blocks))                          # 当expansion非0，洗牌一次subblocks，
+        active_blocks = active_order[:active_block]                                     # 并选择expansion数目的sub blocks
 
         for b_num, b in enumerate(self.blocks):
             if b_num in active_blocks:
-                b.set_training_order(reset, skip=False)
+                b.set_training_order(reset, skip=False)                                 # 激活的设置skip = False，否则为True
             else:
                 b.set_training_order(reset, skip=True)
 
@@ -369,15 +369,14 @@ class MBConv(nn.Module):
             # =================== Training order
             self.index = 0
 
-            self.order = [i for i in range(min_expansion, expansion+1)]
+            self.order = [i for i in range(min_expansion, expansion+1)]                     # 扩张率从小到最大的顺序[2,3,4,5,6]
             self.order = np.array(self.order)
-            random.shuffle(self.order)
+            random.shuffle(self.order)                                                      # 打乱顺序
             # ===================
 
     def forward(self, x, arch_flag=False):
         y = self.point_wise(x)
-        y, skip_connection_num = self.depthwise(
-            y) if not arch_flag else self.depthwise(y, arch_flag)
+        y, skip_connection_num = self.depthwise(y) if not arch_flag else self.depthwise(y, arch_flag)
 
         y = self.se(y) if self.se is not None else y
         y = self.point_wise_1(y)
@@ -406,17 +405,17 @@ class MBConv(nn.Module):
 
     def set_training_order(self, reset=False, state=None, static=False):
         expansion = None
-        if reset:
+        if reset:                                                                           # from the scratch训练时，第一次训练一个扩张率时，reset设置为true洗一次牌，剩下的扩张率走else分支按顺序递增训练
             self.index = 0
             random.shuffle(self.order)
 
-            expansion = self.order[self.index]
+            expansion = self.order[self.index]                                              # 洗一次牌后，选择第一个扩展率expansion ratio
             self.index += 1
         else:
-            expansion = self.order[self.index]
+            expansion = self.order[self.index]                                              # 剩下的扩张率不需要reset
 
             self.index += 1
-            if self.index == len(self.order):
+            if self.index == len(self.order):                                               # 当扩张率列表长度等于遍历次数时，重新洗牌
                 self.index = 0
                 random.shuffle(self.order)
 

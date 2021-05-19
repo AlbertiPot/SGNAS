@@ -22,17 +22,13 @@ class PriorPool:
         self.arch_param_nums = arch_param_nums
         self.CONFIG = CONFIG
 
-        logging.info(
-            "============================= Prior pool ================================")
+        logging.info("============================= Prior pool ================================")
         if os.path.exists(self.CONFIG.path_to_prior_pool):
-            logging.info(
-                "Load prior pool from {}".format(
-                    self.CONFIG.path_to_prior_pool))
+            logging.info("Load prior pool from {}".format(self.CONFIG.path_to_prior_pool))
             self.prior_pool = self._load_prior_pool()
         else:
             logging.info("Generate prior pool")
-            self.prior_pool = self._generate_prior_pool(
-                generator, model, loader, lookup_table, bias)
+            self.prior_pool = self._generate_prior_pool(generator, model, loader, lookup_table, bias)
 
     def get_prior(self, flops):
         prior_keys = np.array([int(k) for k in self.prior_pool.keys()])

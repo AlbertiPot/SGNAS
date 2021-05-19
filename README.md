@@ -24,16 +24,17 @@ pip3 install -r requirements.txt
 
 ## Getting Started
 ### Search
-#### Training Unified Supernet
+#### Training Unified Supernet（当warmup eps 不为0时执行本步）
 * For Imagenet training, set the config file `./config_file/imagenet_config.yml`. For cifar100 training, set the config file `./config_file/config.yml`.
 * Set the hyperparameter `warmup_epochs` in the config file to specific the epochs for training the unified supernet.
+* **warmup_epochs表示训练supernet的轮数，若为0跳过supernet training直接进入到generator训练环节**
 
 ```
 python3 search.py --cfg [CONFIG_FILE] --title [EXPERIMENT_TITLE]
 ```
 #### Training Architecture Generator
 * For Imagenet training, set the config file `./config_file/imagenet_config.yml`. For cifar100 training, set the config file `./config_file/config.yml`.
-* Set the hyperparameter `warmup_epochs`  in the config file to skip the supernet training, and set the hyperparameter `search_epochs` to specific the epochs for training the architecture generator.
+* Set the hyperparameter `warmup_epochs` to 0 in the config file to **skip the supernet training**, and set the hyperparameter `search_epochs` to specific the epochs for training the architecture generator.
 ```
 python3 search.py --cfg [CONFIG_FILE] --title [EXPERIMENT_TITLE]
 ```

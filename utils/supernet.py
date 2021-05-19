@@ -17,11 +17,12 @@ class Supernet(nn.Module):
         self.classes = CONFIG.classes
         self.dataset = CONFIG.dataset
 
-        if self.dataset[:5] == "cifar":
+        if self.dataset[:5] == "cifar":                                                     # 有cifar10和cifar100，对于cifar系列(前五个字符)，第一层的conv k3 first stride是1
             first_stride = 1
         elif self.dataset == "imagenet" or self.dataset == "imagenet_lmdb":
             first_stride = 2
 
+        # ConvK3
         self.first = ConvBNRelu(
             input_channel=3,
             output_channel=32,
@@ -32,6 +33,8 @@ class Supernet(nn.Module):
 
         input_channel = 32
         output_channel = 16
+
+        # MB Expansion Ratio 1 K3 初始化
         self.first_mb = MBConv(input_channel=input_channel,
                                output_channel=output_channel,
                                expansion=1,
@@ -43,14 +46,17 @@ class Supernet(nn.Module):
                                se=False)
 
         input_channel = output_channel
+        
+        # 候选骨干网存储list
         self.stages = nn.ModuleList()
 
+        # 19个unified blocks初始化
         for l_cfg in self.CONFIG.l_cfgs:
             min_expansion = self.CONFIG.min_expansion
             expansion, output_channel, kernels, stride, split_block, se = l_cfg
             self.stages.append(MBConv(input_channel=input_channel,
                                       output_channel=output_channel,
-                                      expansion=expansion,
+                                      expansion=expansion,                                      # 先按最大扩张率6创建子模块
                                       kernels=kernels,
                                       stride=stride,
                                       activation="relu",
@@ -60,7 +66,10 @@ class Supernet(nn.Module):
                                       search=True))
             input_channel = output_channel
 
+        # conv K1
         self.last_stage = conv_1x1_bn(input_channel, 1280)
+        
+        # 1280分类器
         self.classifier = nn.Linear(1280, self.classes)
 
         self.split_block = split_block

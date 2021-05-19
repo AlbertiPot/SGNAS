@@ -1,6 +1,6 @@
 cuda: True
-ngpu: 4
-num_workers: 8
+ngpu: 1
+num_workers: 6
 seed: 42
 
 log_dir: "./logs/"
@@ -26,7 +26,7 @@ path_to_supernet_eval: ./logs/supernet_evaluate.csv
 # Search epoch
 generator: "singan"
 hc_dim: 10
-warmup_epochs: 1
+warmup_epochs: 10
 search_epochs: 50
 
 tau_decay: 0.95
@@ -39,12 +39,12 @@ pool_size: 1
 #####
 
 epochs: 200
-batch_size: 512
+batch_size: 2
 print_freq: 100
 
 dataset: cifar100
 classes: 100
-dataset_dir: ./data/
+dataset_dir: /home/gbc/workspace/SGNAS/data/cifar100
 input_size: 32
 train_portion: 1
 mean: [0.49139968, 0.48215827, 0.44653124]
