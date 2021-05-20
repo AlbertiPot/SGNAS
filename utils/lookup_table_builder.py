@@ -32,8 +32,8 @@ class LookUpTable:
         split_block_nums = self.CONFIG.split_blocks
 
         model_flops = []
-        for l, (l_arch, l_cfg) in enumerate(
-                zip(arch_param, self.CONFIG.l_cfgs)):
+        for l, (l_arch, l_cfg) in enumerate(zip(arch_param, self.CONFIG.l_cfgs)):
+            
             expansion, output_channel, kernels, stride, split_block, se = l_cfg
             layer_flops = []
 
@@ -258,8 +258,7 @@ class LookUpTable:
         # Correct the index if choose skip operation
         del_index = 0
         layers_config = copy.deepcopy(self.CONFIG.l_cfgs)
-        for l_num, (l_cfg, l_arch_param) in enumerate(
-                zip(self.CONFIG.l_cfgs, arch_param)):
+        for l_num, (l_cfg, l_arch_param) in enumerate(zip(self.CONFIG.l_cfgs, arch_param)):
             expansion, output_channel, kernels, stride, split_block, se = l_cfg
 
             config_kernel = []

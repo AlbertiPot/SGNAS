@@ -72,9 +72,8 @@ class Supernet(nn.Module):
         # 1280分类器
         self.classifier = nn.Linear(1280, self.classes)
 
-        self.split_block = split_block
-        self.architecture_param_nums = len(
-            self.CONFIG.l_cfgs) * (self.CONFIG.split_blocks * self.CONFIG.kernels_nums)
+        self.split_block = split_block                                                          # sub-blocks数量
+        self.architecture_param_nums = len(self.CONFIG.l_cfgs) * (self.CONFIG.split_blocks * self.CONFIG.kernels_nums)
 
         self._initialize_weights()
 

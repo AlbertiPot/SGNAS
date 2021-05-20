@@ -2,6 +2,9 @@ __pycache__/
 logs/
 .ipynb_checkpoints/
 data/
+data/cifar-100-pythons/
+data/cifar10/cifar-10-batches-py
 logger
 output/
 summary.csv
+*.log

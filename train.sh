@@ -1,3 +1,5 @@
-python search.py \
+# nohup \
+python -u search.py \
 --cfg /home/gbc/workspace/SGNAS/config_file/cifar_config.yml \
---title 'search_cifar100_test'
+--title 'test' \
+# > train.log 2>&1 &

@@ -34,18 +34,14 @@ if __name__ == "__main__":
     CONFIG = get_config(args.cfg)
 
     if CONFIG.cuda:
-        device = torch.device(
-            "cuda" if (
-                torch.cuda.is_available() and CONFIG.ngpu > 0) else "cpu")
+        device = torch.device("cuda" if (torch.cuda.is_available() and CONFIG.ngpu > 0) else "cpu")
     else:
         device = torch.device("cpu")
 
     get_logger(CONFIG.log_dir)
     writer = get_writer(args.title, CONFIG.write_dir)
 
-    logging.info(
-        "=================================== Experiment title : {} Start ===========================".format(
-            args.title))
+    logging.info("=================================== Experiment title : {} Start ===========================".format(args.title))
 
     set_random_seed(CONFIG.seed)
 
@@ -58,12 +54,12 @@ if __name__ == "__main__":
 
     criterion = cross_encropy_with_label_smoothing
 
-    arch_param_nums = model.get_arch_param_nums()
+    arch_param_nums = model.get_arch_param_nums()               # layer_num * (sub_blocks * kernels_nums)
     generator = get_generator(CONFIG, arch_param_nums)
 
-    if CONFIG.model_pretrained is not None and os.path.isfile(CONFIG.model_pretrained):
-        logging.info("Load pretrained weight from {}".format(CONFIG.model_pretrained))
-        model.load_state_dict(torch.load(CONFIG.model_pretrained)["model"])
+    # if CONFIG.model_pretrained is not None and os.path.isfile(CONFIG.model_pretrained):
+    #     logging.info("Load pretrained weight from {}".format(CONFIG.model_pretrained))
+    #     model.load_state_dict(torch.load(CONFIG.model_pretrained)["model"])
 
     model.to(device)
     generator.to(device)
