@@ -8,3 +8,4 @@ logger
 output/
 summary.csv
 *.log
+cifar100_warmup10_searchto50_logs/
